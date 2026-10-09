@@ -39,14 +39,15 @@ Les durées et le seuil de salaire se règlent dans « Ajuster les durées et le
 | Situation du candidat | Publication de 3 semaines |
 |---|---|
 | Déjà titulaire d’un titre « salarié » ou « travailleur temporaire » (dont certificat de résidence algérien « salarié »), changement d’employeur | Non requise |
-| Étudiant en cours d’études (au-delà de 964 h/an, ou dès la 1re heure avec un certificat de résidence algérien « étudiant ») | Non requise |
+| Autre titre professionnel (ex. certificat de résidence algérien « commerçant », entrepreneur) | À vérifier : consulter un avocat peut faire gagner 3 semaines |
+| Encore étudiant à l’embauche, dernière année comprise (carte « étudiant » ou certificat de résidence algérien « étudiant », autorisation provisoire de travail) | Non requise |
 | Demandeur d’asile depuis plus de 6 mois | Non requise |
-| Étudiant en fin d’études : master obtenu dans l’année, poste en lien avec la formation, salaire ≥ 2 800,53 € brut/mois (1,5 × Smic) | Non requise |
-| **Étudiant algérien en fin d’études**, quels que soient le diplôme et le salaire (accord franco-algérien de 1968) | **Requise** |
+| Étudiant déjà diplômé : master obtenu dans l’année, poste en lien avec la formation, salaire ≥ 2 800,53 € brut/mois (1,5 × Smic) | Non requise |
+| **Étudiant algérien déjà diplômé** (fin de cursus), quels que soient le diplôme et le salaire (accord franco-algérien de 1968) | **Requise** |
 | Carte « recherche d’emploi ou création d’entreprise », poste en lien, même seuil de salaire (carte non accessible aux Algériens) | Non requise |
 | Poste sur la liste des métiers en tension de la région, candidat non algérien | Non requise |
 | Poste sur la liste des métiers en tension, candidat algérien | Requise |
-| Tous les autres cas, dont le titre étudiant seul | Requise |
+| Tous les autres cas, dont l’étudiant diplômé sans master ou sous le seuil de salaire | Requise |
 
 Quand une information manque, l’outil affiche « À préciser ». Le menu « Décision appliquée à la frise » permet de forcer le résultat.
 

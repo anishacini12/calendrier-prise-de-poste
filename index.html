@@ -303,10 +303,11 @@ input:disabled{opacity:.5}
       <div class="field">
         <label for="q-titre">Titre de séjour actuel du candidat</label>
         <select id="q-titre">
-          <option value="etudiant">Étudiant, études terminées (changement de statut)</option>
-          <option value="apt">Étudiant, études en cours (emploi pendant les études)</option>
+          <option value="etudiant">Étudiant déjà diplômé (changement de statut)</option>
+          <option value="apt">Encore étudiant à l’embauche, dernière année comprise (carte étudiant ou CRA étudiant)</option>
           <option value="rece">Recherche d’emploi ou création d’entreprise</option>
           <option value="salarie">Salarié ou travailleur temporaire (dont CRA « salarié »)</option>
+          <option value="pro">Autre titre professionnel (ex. CRA « commerçant », entrepreneur)</option>
           <option value="asile">Demandeur d’asile depuis plus de 6 mois</option>
           <option value="autre">Autre titre, sans droit au travail</option>
         </select>
@@ -495,8 +496,13 @@ function decide(){
     why:'Le candidat détient déjà un titre « salarié » ou « travailleur temporaire », ou un certificat de résidence algérien « salarié ». La nouvelle autorisation de travail est demandée sans opposabilité de la situation de l’emploi, donc sans publication préalable.',
     basis:ANEF,note:''};
   if(S.titre==='apt') return {req:false,st:'ok',badge:'Non requise',title:'Publication non requise',
-    why:'Le candidat poursuit ses études : l’autorisation provisoire de travail est demandée sans publication préalable. Elle est nécessaire au-delà de 964 heures par an avec une carte « étudiant », et dès la première heure avec un certificat de résidence algérien « étudiant ».',
-    basis:ANEF,note:''};
+    why:'Le candidat est encore étudiant à la date d’embauche, par exemple en dernière année : l’employeur demande une autorisation provisoire de travail, sans opposabilité de la situation de l’emploi. Le changement de statut se fait ensuite, à la fin des études.',
+    basis:ANEF+' Type de recrutement : « Étudiant en cours d’étude (autorisation provisoire de travail) ».',
+    note:'Avec un certificat de résidence algérien « étudiant », le travail pendant les études est limité à 50 % de la durée annuelle de travail (Service-public.fr, fiche F2215).'};
+  if(S.titre==='pro') return {req:true,st:'check',badge:'À vérifier',title:'Publication conservée par prudence',
+    why:'Le candidat détient un titre de séjour délivré pour motif professionnel, par exemple un certificat de résidence algérien « commerçant ». Selon l’ANEF, recruter un étranger qui détient un tel titre ne nécessite pas d’opposabilité de la situation de l’emploi « dans la grande majorité des cas », mais ce titre n’apparaît pas dans le tableau détaillé.',
+    basis:ANEF,
+    note:'Consulter un avocat en droit des étrangers est conseillé : cela peut faire gagner 3 semaines en évitant la publication sur France Travail. Si l’exemption est confirmée, choisissez « Forcer : sans publication ».'};
   if(S.titre==='asile') return {req:false,st:'ok',badge:'Non requise',title:'Publication non requise',
     why:'La demande d’asile est en cours d’examen par l’OFPRA depuis au moins 6 mois : l’autorisation de travail est demandée sans publication préalable.',
     basis:ANEF,note:''};
@@ -547,7 +553,7 @@ function decide(){
 }
 
 function renderCheck(d){
-  var t=S.titre, route=(t==='etudiant'||t==='rece'), direct=(t==='salarie'||t==='apt'||t==='asile');
+  var t=S.titre, route=(t==='etudiant'||t==='rece'), direct=(t==='salarie'||t==='apt'||t==='asile'||t==='pro');
   $('f-master').hidden=(t!=='etudiant');
   $('f-lien').hidden=!route;
   $('f-salaire').hidden=!route;
