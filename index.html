@@ -488,11 +488,11 @@ function decide(){
   if(S.override==='avec') return {req:true,st:'req',badge:'Choix manuel',title:'Publication appliquée à la frise',why:'La vérification automatique est mise de côté.',basis:'',note:''};
   if(S.override==='sans') return {req:false,st:'ok',badge:'Choix manuel',title:'Publication retirée de la frise',why:'La vérification automatique est mise de côté.',basis:'',note:''};
 
-  if(S.titre==='salarie') return {req:false,st:'check',badge:'Non requise',
-    title:'Publication non requise, à confirmer',
+  if(S.titre==='salarie') return {req:false,st:'ok',badge:'Non requise',
+    title:'Publication non requise',
     why:'Le candidat détient déjà un titre « salarié ». Le changement d’employeur passe par une nouvelle autorisation de travail, examinée sans publication préalable de l’offre.',
-    basis:'Instruction interministérielle du 12 juillet 2021.',
-    note:'Ce cas ne figure pas dans l’article R5221-21 : à confirmer auprès du service qui instruit la demande.'};
+    basis:'Instruction interministérielle du 12 juillet 2021 (changement d’employeur).',
+    note:''};
 
   var fails=[];
   if(S.titre==='etudiant'||S.titre==='rece'){

@@ -42,7 +42,7 @@ Les durées et le seuil de salaire se règlent dans « Ajuster les durées et le
 | Poste sur la liste des métiers en tension, candidat algérien (accord franco-algérien de 1968) | Requise |
 | Étudiant avec un master obtenu en France dans l’année, poste en lien avec la formation, salaire ≥ 2 800,53 € brut/mois (1,5 × Smic) | Non requise (non garanti pour un candidat algérien) |
 | Carte « recherche d’emploi ou création d’entreprise », poste en lien, même seuil de salaire | Non requise (carte non accessible aux Algériens) |
-| Titre « salarié », changement d’employeur | Non requise, à confirmer |
+| Titre « salarié », changement d’employeur (instruction du 12 juillet 2021) | Non requise |
 | Tous les autres cas, dont le titre étudiant seul | Requise |
 
 Les cas incertains sont signalés « À confirmer » dans l’outil. Le menu « Décision appliquée à la frise » permet de forcer le résultat.
