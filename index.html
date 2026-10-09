@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calendrier de prise de poste</title>
+<meta name="description" content="Simulateur open source : combien de temps avant qu’un candidat étranger ayant besoin d’une autorisation de travail puisse commencer ? Publication de l’offre, dépôt, instruction, titre provisoire et date de prise de poste.">
+<meta property="og:title" content="Calendrier de prise de poste">
+<meta property="og:description" content="Simulateur open source pour candidats étrangers et RH : estimer la date de prise de poste quand une autorisation de travail est nécessaire.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://anishacini12.github.io/calendrier-prise-de-poste/">
+<meta property="og:image" content="https://anishacini12.github.io/calendrier-prise-de-poste/docs/apercu.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one-column planning sheet — settings strip, publication check, Gantt lanes with date arrows, verdict, numbered steps, sources */
+:root{
+  --bg:#F2F4F6; --surface:#FFFFFF; --ink:#152230; --muted:#5B6A79; --line:#D6DDE4; --grid:#DCE2E8; --lane:#ECEFF3;
+  --pub:#2D68D2; --wait:#C9D3DD; --ok:#0E8570; --prudent:#D08A1E; --titre:#7552CC; --limit:#CC3343;
+  --pub-soft:#E4ECFA; --ok-soft:#E0F2EC; --prudent-soft:#FBEED6; --limit-soft:#FBE3E5;
+  --on-bar:#FFFFFF; --on-amber:#2A1A02; --shadow:rgba(21,34,48,.10); --focus:#2D68D2;
+  --font-display:"Bricolage Grotesque","Public Sans",system-ui,sans-serif;
+  --font-body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E141B; --surface:#161F29; --ink:#E6ECF2; --muted:#98A7B6; --line:#2B3746; --grid:#283444; --lane:#1C2632;
+    --pub:#5C8FEA; --wait:#3A4757; --ok:#2DBB95; --prudent:#E7A645; --titre:#9C80EC; --limit:#F06474;
+    --pub-soft:#172742; --ok-soft:#10322A; --prudent-soft:#382A12; --limit-soft:#3B1920;
+    --on-bar:#0E141B; --on-amber:#2A1A02; --shadow:rgba(0,0,0,.35); --focus:#5C8FEA;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E141B; --surface:#161F29; --ink:#E6ECF2; --muted:#98A7B6; --line:#2B3746; --grid:#283444; --lane:#1C2632;
+  --pub:#5C8FEA; --wait:#3A4757; --ok:#2DBB95; --prudent:#E7A645; --titre:#9C80EC; --limit:#F06474;
+  --pub-soft:#172742; --ok-soft:#10322A; --prudent-soft:#382A12; --limit-soft:#3B1920;
+  --on-bar:#0E141B; --on-amber:#2A1A02; --shadow:rgba(0,0,0,.35); --focus:#5C8FEA;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+:root{padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px)}
+body{background:var(--bg); color:var(--ink); font-family:var(--font-body); font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--focus); outline-offset:2px}
+a{color:var(--pub)}
+
+.page{max-width:1180px; margin:0 auto; padding-inline:clamp(16px,4vw,40px); padding-block:28px 56px; display:flex; flex-direction:column; gap:22px}
+
+/* Header */
+.eyebrow{margin:0; font-size:12px; font-weight:600; letter-spacing:.09em; text-transform:uppercase; color:var(--muted)}
+h1{margin:4px 0 8px; font-family:var(--font-display); font-weight:700; font-size:clamp(28px,4.2vw,42px); line-height:1.05; letter-spacing:-.015em; text-wrap:balance}
+.lede{margin:0; max-width:66ch; color:var(--muted)}
+
+/* Panels and fields */
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px}
+.controls{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px}
+.field{display:flex; flex-direction:column; gap:6px; min-width:0}
+.field > label, .flabel{font-size:12.5px; font-weight:600; color:var(--ink)}
+.hint{font-size:12px; line-height:1.4; color:var(--muted)}
+.hint.warn{color:var(--limit); font-weight:500}
+input[type=date], input[type=number], select{font:inherit; font-size:14px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--ink); width:100%; min-width:0; font-variant-numeric:tabular-nums}
+input:disabled{opacity:.5}
+.check{display:flex; align-items:center; gap:9px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--surface); cursor:pointer; font-size:14px}
+.check input{width:16px; height:16px; margin:0; accent-color:var(--pub)}
+.check.off{opacity:.5; cursor:default}
+
+.switch{display:flex; flex-wrap:wrap; gap:3px; padding:3px; border:1px solid var(--line); border-radius:10px; background:var(--lane); margin:0; min-width:0}
+.switch legend{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+.switch input{position:absolute; opacity:0; pointer-events:none}
+.switch label{flex:1 1 auto; text-align:center; padding:6px 10px; border-radius:7px; cursor:pointer; font-size:13px; font-weight:600; color:var(--muted); line-height:1.25}
+.switch label small{display:block; font-size:11.5px; font-weight:500}
+.switch input:checked + label{background:var(--surface); color:var(--ink); box-shadow:0 1px 3px var(--shadow)}
+.switch input:focus-visible + label{outline:2px solid var(--focus); outline-offset:1px}
+
+.tuning{grid-column:1 / -1; border-top:1px solid var(--line); padding-top:4px}
+.tuning summary{cursor:pointer; padding:8px 0; font-size:13.5px; font-weight:600; color:var(--muted); width:max-content; max-width:100%}
+.tuning-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px 16px; padding:6px 0 4px; align-items:end}
+.unit{display:flex; align-items:center; gap:8px}
+.unit input{width:96px; flex:none}
+.unit span{font-size:13px; color:var(--muted)}
+.btn{font:inherit; font-size:13px; font-weight:600; padding:8px 12px; border-radius:8px; border:1px solid var(--line); background:var(--lane); color:var(--ink); cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+
+/* Publication check */
+.pubcheck{display:grid; gap:14px}
+.chk-head h2{margin:0; font-family:var(--font-display); font-weight:600; font-size:clamp(17px,2vw,19px); line-height:1.25; text-wrap:balance}
+.chk-head p{margin:2px 0 0}
+.chk-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px 16px; align-items:start}
+.chk-result{--rc:var(--pub); --rs:var(--pub-soft); --rt:var(--on-bar); display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px 14px; align-items:start; padding:12px 14px; border-radius:10px; background:var(--rs); border-left:4px solid var(--rc)}
+.r-ok{--rc:var(--ok); --rs:var(--ok-soft)}
+.r-check{--rc:var(--prudent); --rs:var(--prudent-soft); --rt:var(--on-amber)}
+.chk-badge{margin-top:2px; padding:4px 10px; border-radius:999px; background:var(--rc); color:var(--rt); font-size:11.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; white-space:nowrap}
+.chk-body{min-width:0}
+.chk-body strong{display:block; font-size:15px; line-height:1.3}
+.chk-body p{margin:3px 0 0; font-size:13.5px; max-width:80ch}
+.chk-body .basis{color:var(--muted); font-size:12.5px}
+.chk-body .note{color:var(--muted); font-size:12.5px; font-style:italic}
+
+/* Board */
+.board{padding:18px 18px 14px}
+.board-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 10px; margin-bottom:10px}
+.board-head h2{margin:0; margin-right:auto; font-family:var(--font-display); font-weight:600; font-size:clamp(18px,2.2vw,21px); line-height:1.25; text-wrap:balance}
+.chip{font-size:12.5px; font-weight:600; padding:3px 10px; border-radius:999px; background:var(--lane); color:var(--ink); white-space:nowrap}
+.chip.prud{background:var(--prudent-soft)}
+.chip.nopub{background:var(--ok-soft)}
+
+.chart-scroll{overflow-x:auto; padding-bottom:4px}
+.chart{display:grid; grid-template-columns:128px minmax(0,1fr); grid-template-rows:repeat(6,auto); column-gap:14px; min-width:860px; position:relative}
+.r1{grid-row:1} .r2{grid-row:2} .r3{grid-row:3} .r4{grid-row:4} .r5{grid-row:5} .r6{grid-row:6}
+.rowlab{grid-column:1; display:flex; flex-direction:column; justify-content:center; line-height:1.2}
+.rowlab b{font-size:13px; font-weight:700}
+.rowlab small{font-size:11.5px; color:var(--muted)}
+.lanelab{height:34px}
+.r3,.r4{margin-top:12px}
+.track{grid-column:2; position:relative}
+.lane{height:34px; background:var(--lane); border-radius:7px}
+
+.ov{grid-column:2; position:relative; pointer-events:none}
+.ov-grid{grid-row:2 / 6; z-index:1}
+.gl{position:absolute; top:0; bottom:0; width:0; border-left:1px dashed var(--grid)}
+.ov-lim{grid-row:2 / 5; z-index:4}
+.lim-line{position:absolute; top:0; bottom:0; width:0; border-left:2px dashed var(--limit); transform:translateX(-1px)}
+
+.seg{position:absolute; top:4px; bottom:4px; z-index:2; border-radius:4px; display:flex; align-items:center; padding:0 8px; overflow:hidden; white-space:nowrap; font-size:12px; font-weight:600}
+.seg.tight .seg-t{visibility:hidden}
+.s-prep{background:var(--wait)}
+.s-pub{background:var(--pub); color:var(--on-bar)}
+.s-gap{background:transparent; border:1px dashed var(--muted); color:var(--muted)}
+.s-wait{background:var(--wait); color:var(--ink)}
+.s-ok{background:var(--ok); color:var(--on-bar)}
+.s-prud{background:repeating-linear-gradient(-45deg, var(--prudent) 0 2px, transparent 2px 8px), var(--prudent-soft); border:1.5px solid var(--prudent); color:var(--ink)}
+.s-prud .seg-t{background:var(--prudent-soft); padding:0 4px; border-radius:3px}
+.s-titre{background:linear-gradient(90deg, var(--titre) var(--fade,100%), transparent 100%)}
+.ghost{opacity:.32}
+
+.tag{position:absolute; top:50%; left:0; transform:translateY(-50%); z-index:3; white-space:nowrap; font-size:12.5px; font-weight:600; color:var(--ink)}
+.tag small{font-size:12px; font-weight:500; color:var(--muted)}
+.tag.on{background:var(--surface); padding:1px 6px; border-radius:4px}
+.lane-empty{position:absolute; inset:0; display:flex; align-items:center; padding-left:12px; font-size:12.5px; color:var(--muted)}
+
+.mkrow{z-index:3; height:110px}
+.r5.mkrow{height:60px}
+.mk{position:absolute; width:0; color:var(--ink)}
+.mkrow.up .mk{bottom:0}
+.mkrow.down .mk{top:0}
+.mk-stem{position:absolute; left:-1px; width:2px; height:var(--h,18px); background:currentColor; z-index:1}
+.up .mk-stem{bottom:0}
+.down .mk-stem{top:0}
+.mk-stem::after{content:""; position:absolute; left:50%; transform:translateX(-50%); border-left:5px solid transparent; border-right:5px solid transparent}
+.up .mk-stem::after{bottom:-1px; border-top:7px solid currentColor}
+.down .mk-stem::after{top:-1px; border-bottom:7px solid currentColor}
+.mk-label{position:absolute; left:0; z-index:2; white-space:nowrap; display:flex; flex-direction:column; line-height:1.25; padding:3px 9px 4px; background:var(--surface); border:1px solid var(--line); border-left:3px solid currentColor; border-radius:7px; box-shadow:0 1px 3px var(--shadow)}
+.up .mk-label{bottom:var(--h,18px)}
+.down .mk-label{top:var(--h,18px)}
+.mk-name{font-size:12px; font-weight:600; color:var(--ink)}
+.mk-date{font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; color:currentColor}
+.c-ink{color:var(--ink)} .c-pub{color:var(--pub)} .c-limit{color:var(--limit)} .c-titre{color:var(--titre)}
+
+.axis{height:42px; margin-top:4px; border-top:1px solid var(--line)}
+.axislab{margin-top:4px; font-size:11.5px; color:var(--muted)}
+.tick{position:absolute; top:0; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; padding-top:6px; line-height:1.2; white-space:nowrap}
+.tick::before{content:""; position:absolute; top:-1px; left:50%; width:1px; height:5px; background:var(--muted)}
+.tick-w{font-family:var(--font-mono); font-size:11.5px; font-weight:500; color:var(--ink)}
+.tick.zero .tick-w{font-weight:600}
+.tick-d{font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums}
+
+.legend{display:flex; flex-wrap:wrap; gap:6px 18px; margin-top:12px; padding-top:12px; border-top:1px solid var(--line); font-size:12.5px; color:var(--muted)}
+.lg{display:inline-flex; align-items:center; gap:7px}
+.sw{width:22px; height:10px; border-radius:3px; flex:none}
+.sw.s-prud{border-width:1px}
+.sw.lim{height:0; border-top:2px dashed var(--limit); border-radius:0}
+
+/* Verdict */
+.verdict{--vc:var(--muted); --vs:var(--lane); --vt:var(--on-bar); display:grid; grid-template-columns:auto minmax(0,1fr); gap:10px 18px; align-items:start; padding:18px 20px; border-radius:14px; background:var(--vs); border:1px solid var(--vc)}
+.v-ok{--vc:var(--ok); --vs:var(--ok-soft)}
+.v-mid{--vc:var(--prudent); --vs:var(--prudent-soft); --vt:var(--on-amber)}
+.v-out{--vc:var(--limit); --vs:var(--limit-soft)}
+.v-badge{margin-top:3px; padding:5px 11px; border-radius:999px; background:var(--vc); color:var(--vt); font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; white-space:nowrap}
+.v-body{min-width:0}
+.v-body h2{margin:0 0 6px; font-family:var(--font-display); font-weight:600; font-size:clamp(19px,2.4vw,24px); line-height:1.2; text-wrap:balance}
+.v-body p{margin:0; max-width:74ch}
+.v-body .v-note{margin-top:8px; font-size:13.5px; color:var(--muted)}
+.meter{margin-top:14px; max-width:520px}
+.meter-bar{position:relative; height:12px; border-radius:6px; border:1px solid var(--prudent); background:repeating-linear-gradient(-45deg, var(--prudent) 0 2px, transparent 2px 8px), var(--surface)}
+.meter-fill{position:absolute; top:0; bottom:0; left:0; background:var(--ok); border-radius:5px 0 0 5px}
+.meter-mark{position:absolute; top:-6px; bottom:-6px; width:0; border-left:2px dashed var(--limit); transform:translateX(-1px)}
+.meter-scale{display:flex; justify-content:space-between; gap:12px; margin-top:6px; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums}
+
+/* Steps */
+.sec-title{margin:0 0 14px; font-family:var(--font-display); font-weight:600; font-size:20px}
+.steps{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:20px}
+.step{--c:var(--ink); display:grid; grid-template-columns:26px minmax(0,1fr); gap:3px 10px; align-content:start}
+.step-n{grid-row:1 / span 3; width:26px; height:26px; border-radius:50%; background:var(--c); color:var(--surface); display:grid; place-items:center; font-family:var(--font-mono); font-size:12.5px; font-weight:600}
+.step h3{margin:2px 0 0; font-size:14.5px; line-height:1.3}
+.step .when{font-size:13px; font-weight:600; color:var(--c); font-variant-numeric:tabular-nums}
+.step p{margin:0; font-size:13.5px; color:var(--muted)}
+.st-pub{--c:var(--pub)} .st-ink{--c:var(--ink)} .st-wait{--c:var(--muted)} .st-titre{--c:var(--titre)} .st-ok{--c:var(--ok)}
+
+/* Sources */
+.sources{border-top:1px solid var(--line); padding-top:20px}
+.sources h3{margin:18px 0 10px; font-size:14px; font-weight:700}
+.src-list{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:12px 24px}
+.src-list li{display:flex; flex-direction:column; gap:2px; min-width:0}
+.src-list a{font-weight:600; font-size:14px; text-underline-offset:2px; overflow-wrap:anywhere}
+.src-list span{font-size:12.5px; color:var(--muted)}
+
+.foot{margin:0; font-size:12.5px; color:var(--muted); max-width:80ch}
+
+@media (max-width:560px){
+  .verdict,.chk-result{grid-template-columns:1fr}
+  .v-badge,.chk-badge{justify-self:start}
+}
+</style>
+</head>
+<body>
+<main class="page">
+  <header>
+    <p class="eyebrow">Autorisation de travail · Date de démarrage</p>
+    <h1>Calendrier de prise de poste</h1>
+    <p class="lede">De votre accord à mon premier jour : chaque étape de la procédure placée sur le calendrier. Changez les dates pour voir où tombe la prise de poste par rapport à votre date limite.</p>
+  </header>
+
+  <section class="panel controls" aria-label="Paramètres de la frise">
+    <div class="field">
+      <label for="in-oui">Date de votre réponse positive</label>
+      <input type="date" id="in-oui">
+      <span class="hint">Le jour où vous confirmez l’embauche</span>
+    </div>
+    <div class="field">
+      <label for="in-limite">Prise de poste au plus tard</label>
+      <input type="date" id="in-limite">
+      <span class="hint">La date la plus tardive que vous pouvez accepter</span>
+    </div>
+    <div class="field">
+      <span class="flabel">Offre sur France Travail</span>
+      <label class="check" for="in-publiee" id="lab-publiee"><input type="checkbox" id="in-publiee"><span>Déjà publiée</span></label>
+      <input type="date" id="in-pub" aria-label="Date de publication de l’offre" hidden>
+      <span class="hint" id="pub-hint"></span>
+    </div>
+    <div class="field">
+      <label for="in-rdv">Rendez-vous préfecture</label>
+      <input type="date" id="in-rdv">
+      <span class="hint" id="rdv-hint"></span>
+    </div>
+    <div class="field">
+      <span class="flabel" id="scen-label">Délai de réponse</span>
+      <fieldset class="switch" aria-labelledby="scen-label">
+        <legend>Scénario d’instruction</legend>
+        <input type="radio" name="scen" id="sc-hab" value="habituel">
+        <label for="sc-hab">Habituel<small id="lab-hab">2–3 sem.</small></label>
+        <input type="radio" name="scen" id="sc-prud" value="prudent">
+        <label for="sc-prud">Prudent<small id="lab-prud">jusqu’à 5 sem.</small></label>
+      </fieldset>
+    </div>
+
+    <details class="tuning">
+      <summary>Ajuster les durées et le seuil de salaire</summary>
+      <div class="tuning-grid">
+        <div class="field">
+          <label for="in-delai">Délai avant publication ou dépôt</label>
+          <div class="unit"><input type="number" id="in-delai" min="0" max="60" step="1"><span>jours</span></div>
+        </div>
+        <div class="field">
+          <label for="in-duree">Durée de publication</label>
+          <div class="unit"><input type="number" id="in-duree" min="0" max="120" step="1"><span>jours</span></div>
+        </div>
+        <div class="field">
+          <label for="in-min">Réponse au plus tôt</label>
+          <div class="unit"><input type="number" id="in-min" min="0" max="120" step="1"><span>jours après dépôt</span></div>
+        </div>
+        <div class="field">
+          <label for="in-hab">Réponse habituelle, au plus tard</label>
+          <div class="unit"><input type="number" id="in-hab" min="0" max="120" step="1"><span>jours après dépôt</span></div>
+        </div>
+        <div class="field">
+          <label for="in-prud">Réponse prudente, au plus tard</label>
+          <div class="unit"><input type="number" id="in-prud" min="0" max="180" step="1"><span>jours après dépôt</span></div>
+        </div>
+        <div class="field">
+          <label for="in-seuil">Seuil 1,5 × Smic</label>
+          <div class="unit"><input type="number" id="in-seuil" min="0" step="0.01"><span>€ brut / mois</span></div>
+        </div>
+        <div class="field">
+          <button type="button" class="btn" id="btn-reset">Revenir à l’exemple</button>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <section class="panel pubcheck" aria-labelledby="chk-title">
+    <div class="chk-head">
+      <h2 id="chk-title">La publication de 3 semaines est-elle obligatoire ?</h2>
+      <p class="hint">Vérification de l’opposabilité de la situation de l’emploi, d’après les articles R5221-20 et R5221-21 du Code du travail.</p>
+    </div>
+    <div class="chk-grid">
+      <div class="field">
+        <label for="q-titre">Titre de séjour actuel du candidat</label>
+        <select id="q-titre">
+          <option value="etudiant">Étudiant</option>
+          <option value="rece">Recherche d’emploi ou création d’entreprise</option>
+          <option value="salarie">Salarié (changement d’employeur)</option>
+          <option value="autre">Autre titre, sans droit au travail</option>
+        </select>
+      </div>
+      <div class="field" id="f-master">
+        <span class="flabel" id="l-master">Master obtenu en France dans l’année ?</span>
+        <fieldset class="switch" aria-labelledby="l-master">
+          <legend>Master obtenu dans l’année</legend>
+          <input type="radio" name="q-master" id="q-master-o" value="oui"><label for="q-master-o">Oui</label>
+          <input type="radio" name="q-master" id="q-master-n" value="non"><label for="q-master-n">Non</label>
+        </fieldset>
+      </div>
+      <div class="field" id="f-lien">
+        <span class="flabel" id="l-lien">Poste en lien avec la formation ?</span>
+        <fieldset class="switch" aria-labelledby="l-lien">
+          <legend>Poste en lien avec la formation</legend>
+          <input type="radio" name="q-lien" id="q-lien-o" value="oui"><label for="q-lien-o">Oui</label>
+          <input type="radio" name="q-lien" id="q-lien-n" value="non"><label for="q-lien-n">Non</label>
+        </fieldset>
+      </div>
+      <div class="field" id="f-salaire">
+        <label for="q-salaire">Salaire proposé</label>
+        <div class="unit"><input type="number" id="q-salaire" min="0" step="10" placeholder="3000"><span>€ brut / mois</span></div>
+        <span class="hint" id="sal-hint"></span>
+      </div>
+      <div class="field" id="f-tension">
+        <span class="flabel" id="l-tension">Poste sur la liste des métiers en tension de la région ?</span>
+        <fieldset class="switch" aria-labelledby="l-tension">
+          <legend>Métier en tension</legend>
+          <input type="radio" name="q-tension" id="q-tension-o" value="oui"><label for="q-tension-o">Oui</label>
+          <input type="radio" name="q-tension" id="q-tension-n" value="non"><label for="q-tension-n">Non</label>
+        </fieldset>
+      </div>
+      <div class="field" id="f-alg">
+        <span class="flabel" id="l-alg">Le candidat est-il de nationalité algérienne ?</span>
+        <fieldset class="switch" aria-labelledby="l-alg">
+          <legend>Nationalité algérienne</legend>
+          <input type="radio" name="q-alg" id="q-alg-o" value="oui"><label for="q-alg-o">Oui</label>
+          <input type="radio" name="q-alg" id="q-alg-n" value="non"><label for="q-alg-n">Non</label>
+        </fieldset>
+      </div>
+      <div class="field">
+        <label for="q-override">Décision appliquée à la frise</label>
+        <select id="q-override">
+          <option value="auto">Selon la vérification</option>
+          <option value="avec">Forcer : avec publication</option>
+          <option value="sans">Forcer : sans publication</option>
+        </select>
+      </div>
+    </div>
+    <div class="chk-result" id="chk-result" aria-live="polite"></div>
+  </section>
+
+  <section class="panel board" aria-labelledby="bh-title">
+    <div class="board-head">
+      <h2 id="bh-title">Prise de poste possible</h2>
+      <span class="chip" id="bh-pub"></span>
+      <span class="chip" id="bh-weeks"></span>
+      <span class="chip" id="bh-scen"></span>
+    </div>
+    <div class="chart-scroll">
+      <div class="chart" id="chart" role="img" aria-label="Frise de la procédure"></div>
+    </div>
+    <div class="legend" aria-hidden="true">
+      <span class="lg"><span class="sw s-pub"></span>Publication de l’offre</span>
+      <span class="lg"><span class="sw s-wait"></span>Instruction en cours</span>
+      <span class="lg"><span class="sw s-ok"></span>Réponse dans le délai habituel</span>
+      <span class="lg"><span class="sw s-prud"></span>Scénario prudent</span>
+      <span class="lg"><span class="sw s-titre" style="--fade:100%"></span>Titre provisoire</span>
+      <span class="lg"><span class="sw lim"></span>Votre date limite</span>
+    </div>
+  </section>
+
+  <section class="verdict" id="verdict" aria-live="polite"></section>
+
+  <section aria-labelledby="steps-title">
+    <h2 class="sec-title" id="steps-title">Les étapes, dans l’ordre</h2>
+    <ol class="steps" id="steps"></ol>
+  </section>
+
+  <section class="sources" aria-labelledby="src-title">
+    <h2 class="sec-title" id="src-title">Sources officielles</h2>
+    <ul class="src-list">
+      <li>
+        <a href="https://www.service-public.gouv.fr/particuliers/vosdroits/F3100" target="_blank" rel="noopener">Salarié étranger : comment sont délivrées les autorisations de travail ?</a>
+        <span>Service-public.fr. Publication de 3 semaines, exemptions « étudiant diplômé » et « recherche d’emploi », seuil de 2 800,53 € brut. Vérifié le 18 juin 2026.</span>
+      </li>
+      <li>
+        <a href="https://code.travail.gouv.fr/code-du-travail/r5221-21" target="_blank" rel="noopener">Code du travail, article R5221-21</a>
+        <span>Code du travail numérique. Les quatre cas où la situation de l’emploi n’est pas opposable.</span>
+      </li>
+      <li>
+        <a href="https://www.immigration.interieur.gouv.fr/limmigration-en-france/sejour-des-etrangers/liste-des-metiers-en-tension-pour-travailleurs-etrangers" target="_blank" rel="noopener">Liste des métiers en tension pour les travailleurs étrangers</a>
+        <span>Ministère de l’Intérieur. Présentation de l’arrêté du 21 mai 2025 et des listes par région.</span>
+      </li>
+      <li>
+        <a href="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051643488" target="_blank" rel="noopener">Arrêté du 21 mai 2025 relatif aux métiers en tension</a>
+        <span>Légifrance. Texte officiel de la liste nationale et des listes régionales.</span>
+      </li>
+      <li>
+        <a href="https://www.service-public.gouv.fr/particuliers/vosdroits/F2215" target="_blank" rel="noopener">Ressortissant algérien étudiant en France</a>
+        <span>Service-public.fr. Certificat de résidence étudiant et changement de statut vers « salarié ». Vérifié le 1er août 2026.</span>
+      </li>
+    </ul>
+    <h3>Autres références</h3>
+    <ul class="src-list">
+      <li>
+        <a href="https://www.infomie.net/IMG/pdf/np_2019-07_changement_de_statut.pdf" target="_blank" rel="noopener">Note pratique « Changement de statut » (Gisti, 2019)</a>
+        <span>Les ressortissants algériens relèvent de l’accord de 1968, ne sont pas concernés par la liste des métiers en tension et n’ont pas accès à la carte « recherche d’emploi ».</span>
+      </li>
+      <li>
+        <a href="https://exilae.fr/le-changement-demployeur-pour-un-salarie-etranger-en-2021/" target="_blank" rel="noopener">Le changement d’employeur pour un salarié étranger</a>
+        <span>Exilae. Nouvelle autorisation sans opposabilité de l’emploi, selon l’instruction du 12 juillet 2021.</span>
+      </li>
+    </ul>
+  </section>
+
+  <p class="foot">Résumé des textes consultés le 9 octobre 2026, qui ne remplace pas un avis juridique. La décision appartient au service qui instruit la demande d’autorisation de travail. Les délais d’instruction sont indicatifs et modifiables.</p>
+  <p class="foot">Outil open source sous licence MIT · <a href="https://github.com/anishacini12/calendrier-prise-de-poste" target="_blank" rel="noopener">github.com/anishacini12/calendrier-prise-de-poste</a> · Les calculs se font dans votre navigateur : aucune donnée n’est envoyée.</p>
+</main>
+
+<script>
+(function(){
+'use strict';
+var DAY=864e5, NB=' ';
+var $=function(id){return document.getElementById(id);};
+var KEY='calendrier-prise-de-poste-v1';
+function iso(t){return new Date(t).toISOString().slice(0,10);}
+var T0=(function(){var n=new Date(); return Date.UTC(n.getFullYear(),n.getMonth(),n.getDate())+14*DAY;})();
+var DEFAULTS={oui:iso(T0),limite:iso(T0+48*DAY),publiee:false,pub:iso(T0-9*DAY),rdv:iso(T0+40*DAY),scen:'habituel',
+  delaiPub:'1',dureePub:'21',instrMin:'14',habMax:'21',prudMax:'35',seuil:'2800.53',
+  titre:'etudiant',master:'non',lien:'oui',salaire:'',tension:'non',alg:'',override:'auto'};
+var S=Object.assign({},DEFAULTS);
+try{var raw=localStorage.getItem(KEY); if(raw){var o=JSON.parse(raw); if(o&&typeof o==='object'){for(var k in DEFAULTS){if(k in o) S[k]=o[k];}}}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+function parse(v){if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null; var p=v.split('-').map(Number); return Date.UTC(p[0],p[1]-1,p[2]);}
+function add(t,n){return t+n*DAY;}
+function diff(a,b){return Math.round((b-a)/DAY);}
+var F1=new Intl.DateTimeFormat('fr-FR',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
+var F2=new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short',timeZone:'UTC'});
+var FE=new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',minimumFractionDigits:2,maximumFractionDigits:2});
+var FE0=new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+function fmt(t){return F1.format(new Date(t));}
+function fmtS(t){return F2.format(new Date(t));}
+function eur(n){return FE.format(n);}
+function plural(n,w){return n+NB+w+(n>1?'s':'');}
+function dur(n){n=Math.abs(n); if(n===0) return '0'+NB+'jour'; if(n<7) return plural(n,'jour'); var w=Math.floor(n/7), r=n%7; return plural(w,'semaine')+(r?' et '+plural(r,'jour'):'');}
+function wk(n){var v=n/7; return Number.isInteger(v)?String(v):v.toFixed(1).replace('.',',');}
+function num(v,d){var x=parseInt(v,10); return (isFinite(x)&&x>=0)?Math.min(x,365):d;}
+function money(v){var x=parseFloat(String(v).replace(',','.')); return (isFinite(x)&&x>0)?x:null;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+var el={oui:$('in-oui'),limite:$('in-limite'),publiee:$('in-publiee'),pub:$('in-pub'),rdv:$('in-rdv'),delaiPub:$('in-delai'),dureePub:$('in-duree'),instrMin:$('in-min'),habMax:$('in-hab'),prudMax:$('in-prud'),seuil:$('in-seuil'),titre:$('q-titre'),salaire:$('q-salaire'),override:$('q-override')};
+var VALS=['oui','limite','pub','rdv','delaiPub','dureePub','instrMin','habMax','prudMax','seuil','titre','salaire','override'];
+var RADIOS={scen:'scen',master:'q-master',lien:'q-lien',tension:'q-tension',alg:'q-alg'};
+var chart=$('chart');
+
+function fill(){
+  VALS.forEach(function(k){el[k].value=S[k]==null?'':S[k];});
+  el.publiee.checked=!!S.publiee;
+  Object.keys(RADIOS).forEach(function(k){
+    document.querySelectorAll('input[name="'+RADIOS[k]+'"]').forEach(function(r){r.checked=(r.value===S[k]);});
+  });
+}
+function read(){
+  VALS.forEach(function(k){S[k]=el[k].value;});
+  S.publiee=el.publiee.checked;
+  Object.keys(RADIOS).forEach(function(k){
+    var r=document.querySelector('input[name="'+RADIOS[k]+'"]:checked'); S[k]=r?r.value:(k==='scen'?'habituel':'');
+  });
+}
+
+/* ---------- Publication check (R5221-20 / R5221-21) ---------- */
+function seuilVal(){var s=money(S.seuil); return s||2800.53;}
+function decide(){
+  var seuil=seuilVal(), sal=money(S.salaire), salOk=sal!=null&&sal>=seuil, alg=S.alg;
+  var du=num(S.dureePub,21);
+  var REQ='Publication requise · '+dur(du);
+  var BASE_REQ='Article R5221-20 du Code du travail : offre publiée 3 semaines auprès de France Travail sans candidature adaptée, sauf métier en tension.';
+  if(S.override==='avec') return {req:true,st:'req',badge:'Choix manuel',title:'Publication appliquée à la frise',why:'La vérification automatique est mise de côté.',basis:'',note:''};
+  if(S.override==='sans') return {req:false,st:'ok',badge:'Choix manuel',title:'Publication retirée de la frise',why:'La vérification automatique est mise de côté.',basis:'',note:''};
+
+  if(S.titre==='salarie') return {req:false,st:'check',badge:'Non requise',
+    title:'Publication non requise, à confirmer',
+    why:'Le candidat détient déjà un titre « salarié ». Le changement d’employeur passe par une nouvelle autorisation de travail, examinée sans publication préalable de l’offre.',
+    basis:'Instruction interministérielle du 12 juillet 2021.',
+    note:'Ce cas ne figure pas dans l’article R5221-21 : à confirmer auprès du service qui instruit la demande.'};
+
+  var fails=[];
+  if(S.titre==='etudiant'||S.titre==='rece'){
+    if(S.titre==='etudiant'&&S.master!=='oui') fails.push('un diplôme de niveau master obtenu dans l’année');
+    if(S.lien!=='oui') fails.push('un poste en lien avec la formation');
+    if(!salOk) fails.push(sal!=null?'un salaire d’au moins '+eur(seuil)+' brut par mois (proposé'+NB+': '+eur(sal)+')':'un salaire d’au moins '+eur(seuil)+' brut par mois (à indiquer)');
+    if(!fails.length){
+      if(S.titre==='rece'){
+        if(alg==='oui') return {req:true,st:'req',badge:'Requise',title:REQ,
+          why:'Les ressortissants algériens n’ont pas accès à la carte « recherche d’emploi ou création d’entreprise », leur séjour relevant de l’accord franco-algérien de 1968. L’exemption ne s’applique donc pas.',
+          basis:BASE_REQ,note:''};
+        return {req:false,st:'ok',badge:'Non requise',title:'Publication non requise',
+          why:'Titulaire de la carte « recherche d’emploi ou création d’entreprise », poste en lien avec la formation et salaire d’au moins 1,5 × Smic.',
+          basis:'Article R5221-21, 2° du Code du travail.',note:''};
+      }
+      if(alg==='oui') return {req:true,st:'check',badge:'À confirmer',title:'Publication conservée par prudence',
+        why:'Les conditions de l’exemption « étudiant diplômé » sont remplies, mais le séjour des ressortissants algériens est régi par l’accord franco-algérien de 1968 : l’application de cette exemption n’est pas garantie.',
+        basis:'Article R5221-21, 3° du Code du travail ; accord du 27 décembre 1968.',
+        note:'Si le service instructeur confirme l’exemption, choisissez « Forcer : sans publication ».'};
+      return {req:false,st:'ok',badge:'Non requise',title:'Publication non requise',
+        why:'Étudiant diplômé d’un master dans l’année, poste en lien avec la formation et salaire d’au moins 1,5 × Smic.',
+        basis:'Article R5221-21, 3° du Code du travail.',
+        note:alg===''?'Si le candidat est de nationalité algérienne, cette exemption n’est pas garantie (accord franco-algérien de 1968).':''};
+    }
+  }
+
+  if(S.tension==='oui'){
+    if(alg==='non') return {req:false,st:'ok',badge:'Non requise',title:'Publication non requise',
+      why:'Le poste figure sur la liste des métiers en tension de la région.',
+      basis:'Article R5221-21, 1° du Code du travail ; arrêté du 21 mai 2025.',note:''};
+    if(alg==='oui') return {req:true,st:'req',badge:'Requise',title:REQ,
+      why:'Le poste figure sur la liste des métiers en tension, mais cette liste ne s’applique pas aux ressortissants algériens, dont la situation relève de l’accord franco-algérien de 1968.',
+      basis:BASE_REQ,note:''};
+    return {req:true,st:'check',badge:'À préciser',title:'Nationalité à préciser',
+      why:'Le poste figure sur la liste des métiers en tension : la publication n’est pas requise, sauf pour un ressortissant algérien. La frise garde la publication tant que la nationalité n’est pas indiquée.',
+      basis:'Article R5221-21, 1° du Code du travail ; arrêté du 21 mai 2025.',note:''};
+  }
+
+  var why;
+  if(S.titre==='etudiant') why='Le titre étudiant seul ne dispense pas de la publication. Il manque '+fails.join(', ')+'.';
+  else if(S.titre==='rece') why='L’exemption de la carte « recherche d’emploi » demande aussi '+fails.join(' et ')+'.';
+  else why='Le titre actuel ne permet pas de travailler et le poste ne figure pas sur la liste des métiers en tension.';
+  return {req:true,st:'req',badge:'Requise',title:REQ,why:why,basis:BASE_REQ,note:''};
+}
+
+function renderCheck(d){
+  var t=S.titre, route=(t==='etudiant'||t==='rece');
+  $('f-master').hidden=(t!=='etudiant');
+  $('f-lien').hidden=!route;
+  $('f-salaire').hidden=!route;
+  $('f-tension').hidden=(t==='salarie');
+  var seuil=seuilVal(), sal=money(S.salaire);
+  var routeMet=route&&(t!=='etudiant'||S.master==='oui')&&S.lien==='oui'&&sal!=null&&sal>=seuil;
+  $('f-alg').hidden=!(t!=='salarie'&&(S.tension==='oui'||routeMet));
+  $('sal-hint').textContent='Seuil'+NB+': '+eur(seuil)+' brut par mois, soit '+FE0.format(seuil*12)+' par an';
+  var box=$('chk-result');
+  box.className='chk-result '+(d.st==='ok'?'r-ok':(d.st==='check'?'r-check':''));
+  box.innerHTML='<span class="chk-badge">'+esc(d.badge)+'</span><div class="chk-body"><strong>'+esc(d.title)+'</strong><p>'+esc(d.why)+'</p>'+
+    (d.basis?'<p class="basis">Base'+NB+': '+esc(d.basis)+'</p>':'')+(d.note?'<p class="note">'+esc(d.note)+'</p>':'')+'</div>';
+}
+
+/* ---------- Model ---------- */
+function model(d){
+  var oui=parse(S.oui); if(oui==null) return null;
+  var lim=parse(S.limite), rdv=parse(S.rdv);
+  var dp=num(S.delaiPub,1), du=num(S.dureePub,21);
+  var a=num(S.instrMin,14), b=Math.max(a,num(S.habMax,21)), c=Math.max(b,num(S.prudMax,35));
+  var pubReq=d.req, pub=null, finPub=null, depot;
+  if(pubReq){
+    var pubIn=S.publiee?parse(S.pub):null;
+    pub=S.publiee?(pubIn!=null?pubIn:oui):add(oui,dp);
+    finPub=add(pub,du); depot=Math.max(finPub,oui);
+  } else {
+    depot=add(oui,dp);
+  }
+  var E=add(depot,a), H=add(depot,b), P=add(depot,c);
+  var prud=S.scen==='prudent', L=prud?P:H;
+  return {oui:oui,lim:lim,rdv:rdv,pubReq:pubReq,pub:pub,finPub:finPub,depot:depot,E:E,H:H,P:P,L:L,dp:dp,du:du,a:a,b:b,c:c,prud:prud};
+}
+function weeksRange(m){
+  var a=Math.round(diff(m.oui,m.E)/7), b=Math.round(diff(m.oui,m.L)/7);
+  return {txt:(a===b?plural(a,'semaine'):a+' à '+b+NB+'semaines'),s:(a===b?'S+'+a:'S+'+a+' à S+'+b)};
+}
+
+/* ---------- Chart ---------- */
+function buildChart(m){
+  var first=m.pubReq?Math.min(m.oui,m.pub):m.oui;
+  var start=Math.max(first-4*DAY,m.oui-35*DAY);
+  if(m.rdv!=null&&m.rdv<start) start=Math.max(m.rdv-4*DAY,m.oui-35*DAY);
+  var end=m.P;
+  if(m.lim!=null) end=Math.max(end,m.lim);
+  if(m.rdv!=null) end=Math.max(end,m.rdv);
+  end=Math.min(end+7*DAY,m.P+49*DAY);
+  var span=end-start;
+  function pct(t){return (t-start)/span*100;}
+  function cl(v){return Math.max(0,Math.min(100,v));}
+  function seg(cls,a,b,text,title){
+    var l=cl(pct(a)), r=cl(pct(b)); if(r-l<=0.05) return '';
+    return '<div class="seg '+cls+'" style="left:'+l.toFixed(3)+'%;width:'+(r-l).toFixed(3)+'%" title="'+esc(title||text)+'">'+(text?'<span class="seg-t">'+esc(text)+'</span>':'')+'</div>';
+  }
+  function marker(t,name,cls){
+    var p=pct(t), out=p<0||p>100, cp=cl(p);
+    return '<div class="mk '+cls+'" data-p="'+cp.toFixed(3)+'" style="left:'+cp.toFixed(3)+'%"><div class="mk-stem"></div><div class="mk-label"><span class="mk-name">'+esc(name)+(out?' (hors frise)':'')+'</span><span class="mk-date">'+esc(fmt(t))+'</span></div></div>';
+  }
+  var ghost=m.prud?'':' ghost';
+  var wr=weeksRange(m);
+
+  /* Lane A: recruitment */
+  var A='';
+  if(m.pubReq){
+    if(m.pub>m.oui) A+=seg('s-prep',m.oui,m.pub,'','Mise en ligne de l’offre ('+dur(diff(m.oui,m.pub))+')');
+    A+=seg('s-pub',m.pub,m.finPub,'Offre publiée · '+dur(m.du),'Offre publiée sur France Travail du '+fmt(m.pub)+' au '+fmt(m.finPub));
+    if(m.depot>m.finPub) A+=seg('s-gap',m.finPub,m.depot,'En attente','Publication terminée, en attente de votre accord');
+  } else if(m.depot>m.oui){
+    A+=seg('s-prep',m.oui,m.depot,'','Préparation du dossier, sans publication ('+dur(diff(m.oui,m.depot))+')');
+  }
+  A+=seg('s-wait',m.depot,m.E,'Instruction','Instruction de la demande, du '+fmt(m.depot)+' au '+fmt(m.E));
+  A+=seg('s-ok',m.E,m.H,'Habituel','Réponse dans le délai habituel : du '+fmt(m.E)+' au '+fmt(m.H));
+  A+=seg('s-prud'+ghost,m.H,m.P,'Prudent','Scénario prudent : réponse jusqu’au '+fmt(m.P));
+
+  /* Lane B: start window */
+  var B=seg('s-ok',m.E,m.H,'','Prise de poste possible dès le '+fmt(m.E))+seg('s-prud'+ghost,m.H,m.P,'','Scénario prudent : jusqu’au '+fmt(m.P));
+  B+='<span class="tag" data-a="'+cl(pct(m.E)).toFixed(3)+'" data-b="'+cl(pct(m.L)).toFixed(3)+'">Prise de poste possible <small>· '+esc(wr.s)+'</small></span>';
+
+  /* Lane C: residence permit */
+  var C='';
+  if(m.rdv==null){
+    C='<span class="lane-empty">Date du rendez-vous préfecture à fixer</span>';
+  } else {
+    var ts=Math.max(m.rdv,m.depot);
+    if(ts<m.L){
+      var fade=Math.max(0,Math.min(100,(m.E-ts)/(m.L-ts)*100));
+      C+='<div class="seg s-titre" style="left:'+cl(pct(ts)).toFixed(3)+'%;width:'+(cl(pct(m.L))-cl(pct(ts))).toFixed(3)+'%;--fade:'+fade.toFixed(1)+'%" title="Titre provisoire du '+esc(fmt(ts))+' jusqu’à réception de l’autorisation"></div>';
+      C+='<span class="tag" data-a="'+cl(pct(ts)).toFixed(3)+'" data-b="'+cl(pct(m.L)).toFixed(3)+'">Titre provisoire <small>· certificat de dépôt</small></span>';
+    } else {
+      C+='<span class="tag" data-a="'+cl(pct(m.rdv)).toFixed(3)+'" data-b="'+cl(pct(m.rdv)).toFixed(3)+'">Autorisation reçue avant le RDV <small>· carte finalisée au RDV</small></span>';
+    }
+  }
+
+  /* Markers */
+  var top=marker(m.oui,'Votre accord','c-ink');
+  if(m.pubReq) top+=marker(m.pub,S.publiee?'Offre publiée':'Publication France Travail','c-pub');
+  top+=marker(m.depot,m.pubReq?'Dépôt de la demande':'Dépôt, sans publication','c-ink');
+  if(m.lim!=null) top+=marker(m.lim,'Votre date limite','c-limit');
+  var bottom=m.rdv!=null?marker(m.rdv,'RDV préfecture','c-titre'):'';
+
+  /* Ticks and grid */
+  var ticks='', lines='';
+  var k0=Math.ceil((start-m.oui)/(7*DAY)), k1=Math.floor((end-m.oui)/(7*DAY));
+  for(var k=k0;k<=k1;k++){
+    var t=add(m.oui,7*k), p=pct(t);
+    if(p<1.5||p>98.5) continue;
+    var lab=k===0?'Oui':(k>0?'S+'+k:'S−'+(-k));
+    ticks+='<div class="tick'+(k===0?' zero':'')+'" style="left:'+p.toFixed(3)+'%"><span class="tick-w">'+lab+'</span><span class="tick-d">'+esc(fmtS(t))+'</span></div>';
+    lines+='<div class="gl" style="left:'+p.toFixed(3)+'%"></div>';
+  }
+  var limLine='';
+  if(m.lim!=null) limLine='<div class="lim-line" style="left:'+cl(pct(m.lim)).toFixed(3)+'%"></div>';
+
+  chart.innerHTML=
+    '<div class="rowlab r1"></div><div class="track mkrow up r1">'+top+'</div>'+
+    '<div class="rowlab lanelab r2"><b>Recrutement</b><small>côté employeur</small></div><div class="track lane r2">'+A+'</div>'+
+    '<div class="rowlab lanelab r3"><b>Prise de poste</b><small>fenêtre possible</small></div><div class="track lane r3">'+B+'</div>'+
+    '<div class="rowlab lanelab r4"><b>Titre de séjour</b><small>côté candidat</small></div><div class="track lane r4">'+C+'</div>'+
+    '<div class="rowlab r5"></div><div class="track mkrow down r5">'+bottom+'</div>'+
+    '<div class="rowlab axislab r6">Semaines après votre accord</div><div class="track axis r6">'+ticks+'</div>'+
+    '<div class="ov ov-grid">'+lines+'</div>'+
+    '<div class="ov ov-lim">'+limLine+'</div>';
+
+  chart.setAttribute('aria-label','Frise : accord le '+fmt(m.oui)+(m.pubReq?', offre publiée du '+fmt(m.pub)+' au '+fmt(m.finPub):', sans publication de l’offre')+', dépôt de la demande le '+fmt(m.depot)+', prise de poste possible du '+fmt(m.E)+' au '+fmt(m.L)+(m.lim!=null?', date limite le '+fmt(m.lim):'')+(m.rdv!=null?', rendez-vous préfecture le '+fmt(m.rdv):'')+'.');
+}
+
+function placeMarkers(row,W){
+  var items=[].slice.call(row.querySelectorAll('.mk')).map(function(mk){
+    var lab=mk.querySelector('.mk-label'), x=(+mk.dataset.p)/100*W, w=lab.offsetWidth;
+    return {mk:mk,lab:lab,x:x,w:w,h:lab.offsetHeight,l:Math.max(0,Math.min(W-w,x-w/2))};
+  }).sort(function(p,q){return p.l-q.l;});
+  var ends=[], GAP=8, BASE=18, STEP=46, maxH=0;
+  items.forEach(function(it){var lv=0; while(ends[lv]!==undefined&&ends[lv]+GAP>it.l) lv++; ends[lv]=it.l+it.w; it.lv=lv;});
+  items.forEach(function(it){
+    var h=BASE+it.lv*STEP;
+    it.mk.style.setProperty('--h',h+'px');
+    it.lab.style.left=(it.l-it.x)+'px';
+    maxH=Math.max(maxH,h+it.h);
+  });
+  row.style.height=(items.length?maxH+4:8)+'px';
+}
+function layout(){
+  var lane=chart.querySelector('.lane'); if(!lane) return;
+  var W=lane.clientWidth; if(!W) return;
+  chart.querySelectorAll('.mkrow').forEach(function(r){placeMarkers(r,W);});
+  chart.querySelectorAll('.seg').forEach(function(s){
+    var t=s.querySelector('.seg-t'); if(!t) return;
+    s.classList.remove('tight');
+    if(t.offsetWidth>s.clientWidth-12) s.classList.add('tight');
+  });
+  chart.querySelectorAll('.tag').forEach(function(tag){
+    tag.classList.remove('on');
+    var a=(+tag.dataset.a)/100*W, b=(+tag.dataset.b)/100*W, w=tag.offsetWidth, left;
+    if(a-10-w>=0) left=a-10-w;
+    else if(b+10+w<=W) left=b+10;
+    else {left=Math.max(0,Math.min(W-w,a+6)); tag.classList.add('on');}
+    tag.style.left=left+'px';
+  });
+}
+
+/* ---------- Verdict ---------- */
+function buildVerdict(m){
+  var v=$('verdict');
+  v.className='verdict';
+  if(m.lim==null){
+    v.innerHTML='<div class="v-badge">Date limite</div><div class="v-body"><h2>Indiquez votre date de prise de poste au plus tard</h2><p>La frise la compare alors à la fenêtre de prise de poste.</p></div>';
+    return;
+  }
+  var before=diff(m.lim,m.E), after=diff(m.lim,m.L), cls, badge, title, body, meter='', note='';
+  if(before>0){
+    cls='v-out'; badge='Dépassement';
+    title='Votre date limite est dépassée de '+dur(before)+(after!==before?' à '+dur(after):'');
+    body='Votre date limite ('+fmt(m.lim)+') arrive avant la première date de prise de poste possible ('+fmt(m.E)+'). Malheureusement, même si l’autorisation arrive vite, il faudrait attendre '+dur(before)+' de plus'+(after!==before?', et jusqu’à '+dur(after)+' si elle arrive au plus tard':'')+'. C’est à vous de décider si vous pouvez attendre ce délai.';
+    if(!m.prud&&m.P>m.L) note='En scénario prudent (réponse jusqu’à '+wk(m.c)+NB+'semaines), le dépassement pourrait aller jusqu’à '+dur(diff(m.lim,m.P))+'.';
+  } else if(after>0){
+    var pc=Math.round(diff(m.E,m.lim)/diff(m.E,m.L)*100);
+    var chance=pc>=67?'les chances sont plutôt bonnes':(pc>=34?'la chance est réelle, sans être garantie':'la chance existe mais reste limitée');
+    cls='v-mid'; badge='Dans l’intervalle';
+    title='Votre date limite tombe dans la fenêtre de prise de poste';
+    body='Environ '+pc+NB+'% de la fenêtre se situe avant le '+fmt(m.lim)+NB+': '+chance+'. Si l’autorisation arrive au plus tard ('+fmt(m.L)+'), le dépassement serait de '+dur(after)+'. C’est à vous de décider si ce risque vous convient.';
+    if(m.prud&&m.lim>=m.H) note='Dans le délai habituel ('+wk(m.a)+' à '+wk(m.b)+NB+'semaines), votre date est tenue. Le risque ne concerne que le scénario prudent.';
+    if(!m.prud&&m.P>m.L) note='En scénario prudent (réponse jusqu’à '+wk(m.c)+NB+'semaines), le dépassement pourrait aller jusqu’à '+dur(diff(m.lim,m.P))+'.';
+    meter='<div class="meter" role="img" aria-label="'+pc+' % de la fenêtre avant votre date limite"><div class="meter-bar"><div class="meter-fill" style="width:'+pc+'%"></div><div class="meter-mark" style="left:'+pc+'%"></div></div><div class="meter-scale"><span>Au plus tôt · '+esc(fmt(m.E))+'</span><span>Au plus tard · '+esc(fmt(m.L))+'</span></div></div>';
+  } else {
+    cls='v-ok'; badge='Compatible';
+    title=after===0?'Compatible, pile à votre date limite':'Compatible, avec '+dur(-after)+' de marge';
+    body='Même si l’autorisation arrive au plus tard ('+fmt(m.L)+'), la prise de poste se fait '+(after===0?'le jour de':'avant')+' votre date limite du '+fmt(m.lim);
+    if(!m.prud&&m.P>m.lim) note='En scénario prudent (réponse jusqu’à '+wk(m.c)+NB+'semaines), le dépassement pourrait atteindre '+dur(diff(m.lim,m.P))+'.';
+  }
+  v.classList.add(cls);
+  if(!/\.$/.test(body)) body+='.';
+  v.innerHTML='<div class="v-badge">'+badge+'</div><div class="v-body"><h2>'+esc(title)+'</h2><p>'+esc(body)+'</p>'+(note?'<p class="v-note">'+esc(note)+'</p>':'')+meter+'</div>';
+}
+
+/* ---------- Steps ---------- */
+function buildSteps(m,d){
+  var wr=weeksRange(m);
+  var s1=m.pubReq
+    ? {c:'st-pub',t:'Publication de l’offre',w:S.publiee?'Publiée le '+fmt(m.pub)+' · jusqu’au '+fmt(m.finPub):'Du '+fmt(m.pub)+' au '+fmt(m.finPub),
+       x:'L’offre reste en ligne '+dur(m.du)+' sur France Travail (ex-Pôle emploi) avant de pouvoir déposer la demande.'}
+    : {c:'st-pub',t:'Publication de l’offre',w:'Non requise',x:d.why};
+  var steps=[
+    s1,
+    {c:'st-ink',t:'Dépôt de la demande d’autorisation de travail',w:fmt(m.depot),
+      x:(!m.pubReq?'Dès votre accord, sans publication préalable.':(m.depot>m.finPub?'Dès votre accord, la période de publication étant déjà écoulée.':'Le dernier jour de la période de publication.'))+' Le dépôt donne un certificat de dépôt.'},
+    {c:'st-wait',t:'Instruction de la demande',w:'Réponse du '+fmt(m.E)+' au '+fmt(m.L),
+      x:'Délai habituellement constaté'+NB+': réponse en '+wk(m.a)+' à '+wk(m.b)+NB+'semaines. Scénario prudent'+NB+': jusqu’à '+wk(m.c)+NB+'semaines. Ces durées se règlent dans « Ajuster les durées ».'},
+    {c:'st-titre',t:'Titre provisoire',w:m.rdv!=null?'RDV préfecture le '+fmt(m.rdv):'RDV préfecture à fixer',
+      x:'Avec le certificat de dépôt, la préfecture me délivre un titre provisoire. J’envoie ensuite l’autorisation définitive pour qu’elle reprenne la fabrication de ma carte.'},
+    {c:'st-ok',t:'Prise de poste',w:'Du '+fmt(m.E)+' au '+fmt(m.L),
+      x:'Dès réception de l’autorisation, soit '+wr.txt+' après votre accord'+NB+': l’équivalent d’un préavis.'}
+  ];
+  $('steps').innerHTML=steps.map(function(s,i){
+    return '<li class="step '+s.c+'"><span class="step-n" aria-hidden="true">'+(i+1)+'</span><h3>'+esc(s.t)+'</h3><span class="when">'+esc(s.w)+'</span><p>'+esc(s.x)+'</p></li>';
+  }).join('');
+}
+
+/* ---------- Render ---------- */
+function render(){
+  var d=decide();
+  renderCheck(d);
+  el.pub.hidden=!(S.publiee&&d.req);
+  el.publiee.disabled=!d.req;
+  $('lab-publiee').classList.toggle('off',!d.req);
+  var a=num(S.instrMin,14), b=Math.max(a,num(S.habMax,21)), c=Math.max(b,num(S.prudMax,35));
+  $('lab-hab').textContent=wk(a)+'–'+wk(b)+NB+'sem.';
+  $('lab-prud').textContent='jusqu’à '+wk(c)+NB+'sem.';
+  var m=model(d);
+  if(!m){
+    chart.innerHTML='<div class="rowlab r1"></div><div class="track r1" style="padding:24px 0;color:var(--muted)">Indiquez la date de votre réponse positive pour afficher la frise.</div>';
+    $('verdict').className='verdict'; $('verdict').innerHTML='';
+    $('steps').innerHTML=''; $('bh-title').textContent='Prise de poste possible';
+    ['bh-weeks','bh-scen','bh-pub'].forEach(function(id){$(id).textContent='';});
+    return;
+  }
+  var ph=$('pub-hint');
+  if(!m.pubReq){
+    ph.textContent='Non requise dans cette situation'+NB+': voir la vérification ci-dessous.';
+  } else if(!S.publiee){
+    ph.textContent=(m.dp===0?'Publication le jour de votre accord':(m.dp===1?'Publication le lendemain de votre accord':'Publication '+dur(m.dp)+' après votre accord'))+NB+': '+fmt(m.pub);
+  } else {
+    ph.textContent=m.finPub<=m.oui?'Publication déjà écoulée à la date de votre accord'+NB+': dépôt possible tout de suite':'Fin de la publication le '+fmt(m.finPub);
+  }
+  var rh=$('rdv-hint'); rh.classList.remove('warn');
+  if(m.rdv==null) rh.textContent='Date à fixer';
+  else if(m.rdv<m.depot){rh.textContent='Avant le dépôt du '+fmt(m.depot)+NB+': le certificat de dépôt ne sera pas encore disponible.'; rh.classList.add('warn');}
+  else if(m.rdv===m.depot) rh.textContent='Le jour du dépôt de la demande';
+  else rh.textContent=dur(diff(m.depot,m.rdv))+' après le dépôt de la demande';
+
+  var wr=weeksRange(m);
+  $('bh-title').textContent='Prise de poste possible du '+fmt(m.E)+' au '+fmt(m.L);
+  $('bh-weeks').textContent=wr.txt+' après votre accord';
+  var sc=$('bh-scen'); sc.textContent=m.prud?'Scénario prudent':'Délai habituel'; sc.classList.toggle('prud',m.prud);
+  var bp=$('bh-pub'); bp.textContent=m.pubReq?'Avec publication · '+dur(m.du):'Sans publication'; bp.classList.toggle('nopub',!m.pubReq);
+
+  buildChart(m);
+  buildVerdict(m);
+  buildSteps(m,d);
+  layout();
+  requestAnimationFrame(layout);
+}
+
+function onEdit(e){if(e.target&&e.target.matches('input,select')){read(); save(); render();}}
+var page=document.querySelector('.page');
+page.addEventListener('input',onEdit);
+page.addEventListener('change',onEdit);
+$('btn-reset').addEventListener('click',function(){S=Object.assign({},DEFAULTS); fill(); save(); render();});
+
+fill(); render();
+if('ResizeObserver' in window){var lastW=0; new ResizeObserver(function(){var l=chart.querySelector('.lane'); var w=l?l.clientWidth:0; if(w!==lastW){lastW=w; layout();}}).observe(chart);}
+else window.addEventListener('resize',layout);
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(layout);
+})();
+</script>
+</body>
+</html>
