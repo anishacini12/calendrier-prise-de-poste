@@ -38,30 +38,34 @@ Les durées et le seuil de salaire se règlent dans « Ajuster les durées et le
 
 | Situation du candidat | Publication de 3 semaines |
 |---|---|
+| Déjà titulaire d’un titre « salarié » ou « travailleur temporaire » (dont certificat de résidence algérien « salarié »), changement d’employeur | Non requise |
+| Étudiant en cours d’études (au-delà de 964 h/an, ou dès la 1re heure avec un certificat de résidence algérien « étudiant ») | Non requise |
+| Demandeur d’asile depuis plus de 6 mois | Non requise |
+| Étudiant en fin d’études : master obtenu dans l’année, poste en lien avec la formation, salaire ≥ 2 800,53 € brut/mois (1,5 × Smic) | Non requise |
+| **Étudiant algérien en fin d’études**, quels que soient le diplôme et le salaire (accord franco-algérien de 1968) | **Requise** |
+| Carte « recherche d’emploi ou création d’entreprise », poste en lien, même seuil de salaire (carte non accessible aux Algériens) | Non requise |
 | Poste sur la liste des métiers en tension de la région, candidat non algérien | Non requise |
-| Poste sur la liste des métiers en tension, candidat algérien (accord franco-algérien de 1968) | Requise |
-| Étudiant avec un master obtenu en France dans l’année, poste en lien avec la formation, salaire ≥ 2 800,53 € brut/mois (1,5 × Smic) | Non requise (non garanti pour un candidat algérien) |
-| Carte « recherche d’emploi ou création d’entreprise », poste en lien, même seuil de salaire | Non requise (carte non accessible aux Algériens) |
-| Titre « salarié », changement d’employeur (instruction du 12 juillet 2021) | Non requise |
+| Poste sur la liste des métiers en tension, candidat algérien | Requise |
 | Tous les autres cas, dont le titre étudiant seul | Requise |
 
-Les cas incertains sont signalés « À confirmer » dans l’outil. Le menu « Décision appliquée à la frise » permet de forcer le résultat.
+Quand une information manque, l’outil affiche « À préciser ». Le menu « Décision appliquée à la frise » permet de forcer le résultat.
 
 ## Limites
 
-- Ce n’est **pas un avis juridique** : l’outil résume les textes consultés le 9 octobre 2026.
+- Ce n’est **pas un avis juridique** : l’outil résume les textes consultés en octobre 2026.
 - Les délais d’instruction sont indicatifs et varient selon le service instructeur.
 - Le pourcentage « dans l’intervalle » suppose que la réponse peut arriver n’importe quel jour de la fenêtre.
 
 ## Sources officielles
 
+- [Recruter un salarié étranger résidant déjà en France](https://administration-etrangers-en-france.interieur.gouv.fr/immiprousager/#/information) (ANEF, ministère de l’Intérieur : titres avec ou sans opposabilité, règle des étudiants algériens)
 - [Salarié étranger : comment sont délivrées les autorisations de travail ?](https://www.service-public.gouv.fr/particuliers/vosdroits/F3100) (Service-public.fr, vérifié le 18 juin 2026)
 - [Code du travail, article R5221-21](https://code.travail.gouv.fr/code-du-travail/r5221-21) (Code du travail numérique)
 - [Liste des métiers en tension pour les travailleurs étrangers](https://www.immigration.interieur.gouv.fr/limmigration-en-france/sejour-des-etrangers/liste-des-metiers-en-tension-pour-travailleurs-etrangers) (Ministère de l’Intérieur)
 - [Arrêté du 21 mai 2025 relatif aux métiers en tension](https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051643488) (Légifrance)
 - [Étudiant algérien en France](https://www.service-public.gouv.fr/particuliers/vosdroits/F2215) (Service-public.fr)
 
-Autres références : [note pratique « Changement de statut » du Gisti](https://www.infomie.net/IMG/pdf/np_2019-07_changement_de_statut.pdf), [Exilae sur le changement d’employeur](https://exilae.fr/le-changement-demployeur-pour-un-salarie-etranger-en-2021/).
+Autres références : [note pratique « Changement de statut » du Gisti](https://www.infomie.net/IMG/pdf/np_2019-07_changement_de_statut.pdf).
 
 ## Lancer en local
 

@@ -297,15 +297,17 @@ input:disabled{opacity:.5}
   <section class="panel pubcheck" aria-labelledby="chk-title">
     <div class="chk-head">
       <h2 id="chk-title">La publication de 3 semaines est-elle obligatoire ?</h2>
-      <p class="hint">Vérification de l’opposabilité de la situation de l’emploi, d’après les articles R5221-20 et R5221-21 du Code du travail.</p>
+      <p class="hint">Vérification de l’opposabilité de la situation de l’emploi, d’après le Code du travail (articles R5221-20 et R5221-21) et la plateforme ANEF du ministère de l’Intérieur.</p>
     </div>
     <div class="chk-grid">
       <div class="field">
         <label for="q-titre">Titre de séjour actuel du candidat</label>
         <select id="q-titre">
-          <option value="etudiant">Étudiant</option>
+          <option value="etudiant">Étudiant, études terminées (changement de statut)</option>
+          <option value="apt">Étudiant, études en cours (emploi pendant les études)</option>
           <option value="rece">Recherche d’emploi ou création d’entreprise</option>
-          <option value="salarie">Salarié (changement d’employeur)</option>
+          <option value="salarie">Salarié ou travailleur temporaire (dont CRA « salarié »)</option>
+          <option value="asile">Demandeur d’asile depuis plus de 6 mois</option>
           <option value="autre">Autre titre, sans droit au travail</option>
         </select>
       </div>
@@ -389,6 +391,10 @@ input:disabled{opacity:.5}
     <h2 class="sec-title" id="src-title">Sources officielles</h2>
     <ul class="src-list">
       <li>
+        <a href="https://administration-etrangers-en-france.interieur.gouv.fr/immiprousager/#/information" target="_blank" rel="noopener">Recruter un salarié étranger résidant déjà en France</a>
+        <span>ANEF, ministère de l’Intérieur. Tableau des titres avec ou sans opposabilité de la situation de l’emploi, et règle pour les étudiants algériens en fin de cursus.</span>
+      </li>
+      <li>
         <a href="https://www.service-public.gouv.fr/particuliers/vosdroits/F3100" target="_blank" rel="noopener">Salarié étranger : comment sont délivrées les autorisations de travail ?</a>
         <span>Service-public.fr. Publication de 3 semaines, exemptions « étudiant diplômé » et « recherche d’emploi », seuil de 2 800,53 € brut. Vérifié le 18 juin 2026.</span>
       </li>
@@ -415,14 +421,10 @@ input:disabled{opacity:.5}
         <a href="https://www.infomie.net/IMG/pdf/np_2019-07_changement_de_statut.pdf" target="_blank" rel="noopener">Note pratique « Changement de statut » (Gisti, 2019)</a>
         <span>Les ressortissants algériens relèvent de l’accord de 1968, ne sont pas concernés par la liste des métiers en tension et n’ont pas accès à la carte « recherche d’emploi ».</span>
       </li>
-      <li>
-        <a href="https://exilae.fr/le-changement-demployeur-pour-un-salarie-etranger-en-2021/" target="_blank" rel="noopener">Le changement d’employeur pour un salarié étranger</a>
-        <span>Exilae. Nouvelle autorisation sans opposabilité de l’emploi, selon l’instruction du 12 juillet 2021.</span>
-      </li>
     </ul>
   </section>
 
-  <p class="foot">Résumé des textes consultés le 9 octobre 2026, qui ne remplace pas un avis juridique. La décision appartient au service qui instruit la demande d’autorisation de travail. Les délais d’instruction sont indicatifs et modifiables.</p>
+  <p class="foot">Résumé des textes consultés en octobre 2026, qui ne remplace pas un avis juridique. La décision appartient au service qui instruit la demande d’autorisation de travail. Les délais d’instruction sont indicatifs et modifiables.</p>
   <p class="foot">Outil open source sous licence MIT · <a href="https://github.com/anishacini12/calendrier-prise-de-poste" target="_blank" rel="noopener">github.com/anishacini12/calendrier-prise-de-poste</a> · Les calculs se font dans votre navigateur : aucune donnée n’est envoyée.</p>
 </main>
 
@@ -485,14 +487,22 @@ function decide(){
   var du=num(S.dureePub,21);
   var REQ='Publication requise · '+dur(du);
   var BASE_REQ='Article R5221-20 du Code du travail : offre publiée 3 semaines auprès de France Travail sans candidature adaptée, sauf métier en tension.';
+  var ANEF='ANEF, ministère de l’Intérieur : recrutement d’un salarié étranger résidant déjà en France.';
   if(S.override==='avec') return {req:true,st:'req',badge:'Choix manuel',title:'Publication appliquée à la frise',why:'La vérification automatique est mise de côté.',basis:'',note:''};
   if(S.override==='sans') return {req:false,st:'ok',badge:'Choix manuel',title:'Publication retirée de la frise',why:'La vérification automatique est mise de côté.',basis:'',note:''};
 
-  if(S.titre==='salarie') return {req:false,st:'ok',badge:'Non requise',
-    title:'Publication non requise',
-    why:'Le candidat détient déjà un titre « salarié ». Le changement d’employeur passe par une nouvelle autorisation de travail, examinée sans publication préalable de l’offre.',
-    basis:'Instruction interministérielle du 12 juillet 2021 (changement d’employeur).',
-    note:''};
+  if(S.titre==='salarie') return {req:false,st:'ok',badge:'Non requise',title:'Publication non requise',
+    why:'Le candidat détient déjà un titre « salarié » ou « travailleur temporaire », ou un certificat de résidence algérien « salarié ». La nouvelle autorisation de travail est demandée sans opposabilité de la situation de l’emploi, donc sans publication préalable.',
+    basis:ANEF,note:''};
+  if(S.titre==='apt') return {req:false,st:'ok',badge:'Non requise',title:'Publication non requise',
+    why:'Le candidat poursuit ses études : l’autorisation provisoire de travail est demandée sans publication préalable. Elle est nécessaire au-delà de 964 heures par an avec une carte « étudiant », et dès la première heure avec un certificat de résidence algérien « étudiant ».',
+    basis:ANEF,note:''};
+  if(S.titre==='asile') return {req:false,st:'ok',badge:'Non requise',title:'Publication non requise',
+    why:'La demande d’asile est en cours d’examen par l’OFPRA depuis au moins 6 mois : l’autorisation de travail est demandée sans publication préalable.',
+    basis:ANEF,note:''};
+  if(S.titre==='etudiant'&&alg==='oui') return {req:true,st:'req',badge:'Requise',title:REQ,
+    why:'Pour un étudiant algérien en fin de cursus, le recrutement est toujours soumis à l’opposabilité de la situation de l’emploi, conformément à l’accord franco-algérien de 1968 : la publication préalable de l’offre est obligatoire, quels que soient le diplôme et le salaire.',
+    basis:ANEF,note:''};
 
   var fails=[];
   if(S.titre==='etudiant'||S.titre==='rece'){
@@ -506,16 +516,14 @@ function decide(){
           basis:BASE_REQ,note:''};
         return {req:false,st:'ok',badge:'Non requise',title:'Publication non requise',
           why:'Titulaire de la carte « recherche d’emploi ou création d’entreprise », poste en lien avec la formation et salaire d’au moins 1,5 × Smic.',
-          basis:'Article R5221-21, 2° du Code du travail.',note:''};
+          basis:'Article R5221-21, 2° du Code du travail ; '+ANEF,note:''};
       }
-      if(alg==='oui') return {req:true,st:'check',badge:'À confirmer',title:'Publication conservée par prudence',
-        why:'Les conditions de l’exemption « étudiant diplômé » sont remplies, mais le séjour des ressortissants algériens est régi par l’accord franco-algérien de 1968 : l’application de cette exemption n’est pas garantie.',
-        basis:'Article R5221-21, 3° du Code du travail ; accord du 27 décembre 1968.',
-        note:'Si le service instructeur confirme l’exemption, choisissez « Forcer : sans publication ».'};
+      if(alg==='') return {req:false,st:'check',badge:'À préciser',title:'Publication non requise, sauf candidat algérien',
+        why:'Étudiant diplômé d’un master, poste en lien avec la formation et salaire d’au moins 1,5 × Smic : la publication n’est pas requise. Pour un étudiant algérien en fin de cursus, elle reste obligatoire. Précisez la nationalité.',
+        basis:'Article R5221-21, 3° du Code du travail ; '+ANEF,note:''};
       return {req:false,st:'ok',badge:'Non requise',title:'Publication non requise',
         why:'Étudiant diplômé d’un master dans l’année, poste en lien avec la formation et salaire d’au moins 1,5 × Smic.',
-        basis:'Article R5221-21, 3° du Code du travail.',
-        note:alg===''?'Si le candidat est de nationalité algérienne, cette exemption n’est pas garantie (accord franco-algérien de 1968).':''};
+        basis:'Article R5221-21, 3° du Code du travail ; '+ANEF,note:''};
     }
   }
 
@@ -539,14 +547,14 @@ function decide(){
 }
 
 function renderCheck(d){
-  var t=S.titre, route=(t==='etudiant'||t==='rece');
+  var t=S.titre, route=(t==='etudiant'||t==='rece'), direct=(t==='salarie'||t==='apt'||t==='asile');
   $('f-master').hidden=(t!=='etudiant');
   $('f-lien').hidden=!route;
   $('f-salaire').hidden=!route;
-  $('f-tension').hidden=(t==='salarie');
+  $('f-tension').hidden=direct;
   var seuil=seuilVal(), sal=money(S.salaire);
   var routeMet=route&&(t!=='etudiant'||S.master==='oui')&&S.lien==='oui'&&sal!=null&&sal>=seuil;
-  $('f-alg').hidden=!(t!=='salarie'&&(S.tension==='oui'||routeMet));
+  $('f-alg').hidden=direct||!(t==='etudiant'||S.tension==='oui'||routeMet);
   $('sal-hint').textContent='Seuil'+NB+': '+eur(seuil)+' brut par mois, soit '+FE0.format(seuil*12)+' par an';
   var box=$('chk-result');
   box.className='chk-result '+(d.st==='ok'?'r-ok':(d.st==='check'?'r-check':''));
