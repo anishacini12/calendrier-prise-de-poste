@@ -144,6 +144,11 @@ input:disabled{opacity:.5}
 .tag small{font-size:12px; font-weight:500; color:var(--muted)}
 .tag.on{background:var(--surface); padding:1px 6px; border-radius:4px}
 .lane-empty{position:absolute; inset:0; display:flex; align-items:center; padding-left:12px; font-size:12.5px; color:var(--muted)}
+.s-early{background:repeating-linear-gradient(-45deg, var(--limit) 0 2px, transparent 2px 7px), var(--limit-soft); border:1.5px solid var(--limit)}
+.tag.warn{color:var(--limit)}
+.tag.warn small{color:var(--limit); opacity:.85}
+.warn-note{margin:12px 0 0; padding:10px 14px; border-radius:8px; background:var(--limit-soft); border-left:4px solid var(--limit); font-size:13.5px; line-height:1.45; color:var(--ink)}
+.warn-note b{color:var(--limit)}
 
 .mkrow{z-index:3; height:110px}
 .r5.mkrow{height:60px}
@@ -371,6 +376,7 @@ input:disabled{opacity:.5}
     <div class="chart-scroll">
       <div class="chart" id="chart" role="img" aria-label="Frise de la procédure"></div>
     </div>
+    <p class="warn-note" id="chart-note" hidden></p>
     <div class="legend" aria-hidden="true">
       <span class="lg"><span class="sw s-pub"></span>Publication de l’offre</span>
       <span class="lg"><span class="sw s-wait"></span>Instruction en cours</span>
@@ -636,11 +642,15 @@ function buildChart(m){
   if(m.rdv==null){
     C='<span class="lane-empty">Date du rendez-vous préfecture à fixer</span>';
   } else {
-    var ts=Math.max(m.rdv,m.depot);
+    var ts=Math.max(m.rdv,m.depot), early=m.rdv<m.depot;
+    if(early){
+      C+='<div class="seg s-early" style="left:'+cl(pct(m.rdv)).toFixed(3)+'%;width:'+(cl(pct(m.depot))-cl(pct(m.rdv))).toFixed(3)+'%" title="Le RDV du '+esc(fmt(m.rdv))+' précède le dépôt du '+esc(fmt(m.depot))+'"></div>';
+      C+='<span class="tag warn" data-a="'+cl(pct(m.rdv)).toFixed(3)+'" data-b="'+cl(pct(m.depot)).toFixed(3)+'">Certificat de dépôt pas prêt</span>';
+    }
     if(ts<m.L){
       var fade=Math.max(0,Math.min(100,(m.E-ts)/(m.L-ts)*100));
       C+='<div class="seg s-titre" style="left:'+cl(pct(ts)).toFixed(3)+'%;width:'+(cl(pct(m.L))-cl(pct(ts))).toFixed(3)+'%;--fade:'+fade.toFixed(1)+'%" title="Titre provisoire du '+esc(fmt(ts))+' jusqu’à réception de l’autorisation"></div>';
-      C+='<span class="tag" data-a="'+cl(pct(ts)).toFixed(3)+'" data-b="'+cl(pct(m.L)).toFixed(3)+'">Titre provisoire <small>· certificat de dépôt</small></span>';
+      C+='<span class="tag"'+(early?' data-side="right"':'')+' data-a="'+cl(pct(ts)).toFixed(3)+'" data-b="'+cl(pct(m.L)).toFixed(3)+'">Titre provisoire <small>· certificat de dépôt</small></span>';
     } else {
       C+='<span class="tag" data-a="'+cl(pct(m.rdv)).toFixed(3)+'" data-b="'+cl(pct(m.rdv)).toFixed(3)+'">Autorisation reçue avant le RDV <small>· carte finalisée au RDV</small></span>';
     }
@@ -651,7 +661,7 @@ function buildChart(m){
   if(m.pubReq) top+=marker(m.pub,S.publiee?'Offre publiée':'Publication France Travail','c-pub');
   top+=marker(m.depot,m.pubReq?'Dépôt de la demande':'Dépôt, sans publication','c-ink');
   if(m.lim!=null) top+=marker(m.lim,'Votre date limite','c-limit');
-  var bottom=m.rdv!=null?marker(m.rdv,'RDV préfecture','c-titre'):'';
+  var bottom=m.rdv!=null?(m.rdv<m.depot?marker(m.rdv,'RDV préfecture · trop tôt','c-limit'):marker(m.rdv,'RDV préfecture','c-titre')):'';
 
   /* Ticks and grid */
   var ticks='', lines='';
@@ -706,7 +716,16 @@ function layout(){
   chart.querySelectorAll('.tag').forEach(function(tag){
     tag.classList.remove('on');
     var a=(+tag.dataset.a)/100*W, b=(+tag.dataset.b)/100*W, w=tag.offsetWidth, left;
-    if(a-10-w>=0) left=a-10-w;
+    if(tag.classList.contains('warn')){
+      if(a-10-w>=0) left=a-10-w;
+      else if(b-a>=w+12) {left=a+6; tag.classList.add('on');}
+      else {left=0; tag.classList.add('on');}
+    }
+    else if(tag.dataset.side==='right'){
+      if(b+10+w<=W) left=b+10;
+      else {left=Math.max(0,Math.min(W-w,a+6)); tag.classList.add('on');}
+    }
+    else if(a-10-w>=0) left=a-10-w;
     else if(b+10+w<=W) left=b+10;
     else {left=Math.max(0,Math.min(W-w,a+6)); tag.classList.add('on');}
     tag.style.left=left+'px';
@@ -760,8 +779,11 @@ function buildSteps(m,d){
       x:(!m.pubReq?'Dès votre accord, sans publication préalable.':(m.depot>m.finPub?'Dès votre accord, la période de publication étant déjà écoulée.':'Le dernier jour de la période de publication.'))+' Le dépôt donne un certificat de dépôt.'},
     {c:'st-wait',t:'Instruction de la demande',w:'Réponse du '+fmt(m.E)+' au '+fmt(m.L),
       x:'Délai habituellement constaté'+NB+': réponse en '+wk(m.a)+' à '+wk(m.b)+NB+'semaines. Scénario prudent'+NB+': jusqu’à '+wk(m.c)+NB+'semaines. Ces durées se règlent dans « Ajuster les durées ».'},
-    {c:'st-titre',t:'Titre provisoire',w:m.rdv!=null?'RDV préfecture le '+fmt(m.rdv):'RDV préfecture à fixer',
-      x:'Avec le certificat de dépôt, la préfecture me délivre un titre provisoire. J’envoie ensuite l’autorisation définitive pour qu’elle reprenne la fabrication de ma carte.'},
+    (m.rdv!=null&&m.rdv<m.depot)
+      ? {c:'st-titre',t:'Titre provisoire',w:'RDV préfecture le '+fmt(m.rdv)+' · à décaler',
+         x:'Le rendez-vous tombe avant le dépôt de la demande, le '+fmt(m.depot)+NB+': le certificat de dépôt ne sera pas prêt. Il faut essayer de le décaler après cette date. Ensuite, avec le certificat de dépôt, la préfecture me délivre un titre provisoire, puis j’envoie l’autorisation définitive pour qu’elle reprenne la fabrication de ma carte.'}
+      : {c:'st-titre',t:'Titre provisoire',w:m.rdv!=null?'RDV préfecture le '+fmt(m.rdv):'RDV préfecture à fixer',
+         x:'Avec le certificat de dépôt, la préfecture me délivre un titre provisoire. J’envoie ensuite l’autorisation définitive pour qu’elle reprenne la fabrication de ma carte.'},
     {c:'st-ok',t:'Prise de poste',w:'Du '+fmt(m.E)+' au '+fmt(m.L),
       x:'Dès réception de l’autorisation, soit '+wr.txt+' après votre accord'+NB+': l’équivalent d’un préavis.'}
   ];
@@ -798,7 +820,7 @@ function render(){
   }
   var rh=$('rdv-hint'); rh.classList.remove('warn');
   if(m.rdv==null) rh.textContent='Date à fixer';
-  else if(m.rdv<m.depot){rh.textContent='Avant le dépôt du '+fmt(m.depot)+NB+': le certificat de dépôt ne sera pas encore disponible.'; rh.classList.add('warn');}
+  else if(m.rdv<m.depot){rh.textContent='Avant le dépôt du '+fmt(m.depot)+NB+': le certificat de dépôt ne sera pas encore disponible. Essayez de décaler le rendez-vous après cette date.'; rh.classList.add('warn');}
   else if(m.rdv===m.depot) rh.textContent='Le jour du dépôt de la demande';
   else rh.textContent=dur(diff(m.depot,m.rdv))+' après le dépôt de la demande';
 
@@ -809,6 +831,11 @@ function render(){
   var bp=$('bh-pub'); bp.textContent=m.pubReq?'Avec publication · '+dur(m.du):'Sans publication'; bp.classList.toggle('nopub',!m.pubReq);
 
   buildChart(m);
+  var cn=$('chart-note');
+  if(m.rdv!=null&&m.rdv<m.depot){
+    cn.hidden=false;
+    cn.innerHTML='<b>Certificat de dépôt pas prêt.</b> Le rendez-vous préfecture du '+esc(fmt(m.rdv))+' tombe avant le dépôt de la demande d’autorisation ('+esc(fmt(m.depot))+'). Conseil au candidat'+NB+': essayer de décaler le rendez-vous après le '+esc(fmt(m.depot))+', pour l’aborder avec le certificat de dépôt en main.';
+  } else { cn.hidden=true; cn.innerHTML=''; }
   buildVerdict(m);
   buildSteps(m,d);
   layout();
