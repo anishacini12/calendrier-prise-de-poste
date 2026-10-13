@@ -495,6 +495,10 @@ function decide(){
   var REQ='Publication requise · '+dur(du);
   var BASE_REQ='Article R5221-20 du Code du travail : offre publiée 3 semaines auprès de France Travail sans candidature adaptée, sauf métier en tension.';
   var ANEF='ANEF, ministère de l’Intérieur : recrutement d’un salarié étranger résidant déjà en France.';
+  var TENSION_ALG={req:true,st:'check',badge:'À vérifier',title:'Publication conservée par prudence',
+    why:'Le poste figure sur la liste des métiers en tension. Selon l’ANEF, cette liste ne s’applique pas aux ressortissants algériens (accord franco-algérien de 1968). En pratique, des avocats en immigration professionnelle constatent pourtant que l’argument du métier en tension est accepté pour des candidats algériens : l’employeur peut le tenter.',
+    basis:'ANEF, ministère de l’Intérieur ; pratique administrative constatée par des avocats.',
+    note:'Si la demande est déposée sans publication, choisissez « Forcer : sans publication » pour voir le calendrier le plus court.'};
   if(S.override==='avec') return {req:true,st:'req',badge:'Choix manuel',title:'Publication appliquée à la frise',why:'La vérification automatique est mise de côté.',basis:'',note:''};
   if(S.override==='sans') return {req:false,st:'ok',badge:'Choix manuel',title:'Publication retirée de la frise',why:'La vérification automatique est mise de côté.',basis:'',note:''};
 
@@ -512,6 +516,7 @@ function decide(){
   if(S.titre==='asile') return {req:false,st:'ok',badge:'Non requise',title:'Publication non requise',
     why:'La demande d’asile est en cours d’examen par l’OFPRA depuis au moins 6 mois : l’autorisation de travail est demandée sans publication préalable.',
     basis:ANEF,note:''};
+  if(S.titre==='etudiant'&&alg==='oui'&&S.tension==='oui') return TENSION_ALG;
   if(S.titre==='etudiant'&&alg==='oui') return {req:true,st:'req',badge:'Requise',title:REQ,
     why:'Pour un étudiant algérien en fin de cursus, le recrutement est toujours soumis à l’opposabilité de la situation de l’emploi, conformément à l’accord franco-algérien de 1968 : la publication préalable de l’offre est obligatoire, quels que soient le diplôme et le salaire.',
     basis:ANEF,note:''};
@@ -543,11 +548,9 @@ function decide(){
     if(alg==='non') return {req:false,st:'ok',badge:'Non requise',title:'Publication non requise',
       why:'Le poste figure sur la liste des métiers en tension de la région.',
       basis:'Article R5221-21, 1° du Code du travail ; arrêté du 21 mai 2025.',note:''};
-    if(alg==='oui') return {req:true,st:'req',badge:'Requise',title:REQ,
-      why:'Le poste figure sur la liste des métiers en tension, mais cette liste ne s’applique pas aux ressortissants algériens, dont la situation relève de l’accord franco-algérien de 1968.',
-      basis:BASE_REQ,note:''};
+    if(alg==='oui') return TENSION_ALG;
     return {req:true,st:'check',badge:'À préciser',title:'Nationalité à préciser',
-      why:'Le poste figure sur la liste des métiers en tension : la publication n’est pas requise, sauf pour un ressortissant algérien. La frise garde la publication tant que la nationalité n’est pas indiquée.',
+      why:'Le poste figure sur la liste des métiers en tension : la publication n’est pas requise, sauf en principe pour un ressortissant algérien. La frise garde la publication tant que la nationalité n’est pas indiquée.',
       basis:'Article R5221-21, 1° du Code du travail ; arrêté du 21 mai 2025.',note:''};
   }
 

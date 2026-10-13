@@ -46,7 +46,7 @@ Les durées et le seuil de salaire se règlent dans « Ajuster les durées et le
 | **Étudiant algérien déjà diplômé** (fin de cursus), quels que soient le diplôme et le salaire (accord franco-algérien de 1968) | **Requise** |
 | Carte « recherche d’emploi ou création d’entreprise », poste en lien, même seuil de salaire (carte non accessible aux Algériens) | Non requise |
 | Poste sur la liste des métiers en tension de la région, candidat non algérien | Non requise |
-| Poste sur la liste des métiers en tension, candidat algérien | Requise |
+| Poste sur la liste des métiers en tension, candidat algérien | À vérifier : exclu selon l’ANEF, mais accepté en pratique selon des avocats (publication conservée par prudence dans la frise) |
 | Tous les autres cas, dont l’étudiant diplômé sans master ou sous le seuil de salaire | Requise |
 
 Quand une information manque, l’outil affiche « À préciser ». Le menu « Décision appliquée à la frise » permet de forcer le résultat.
