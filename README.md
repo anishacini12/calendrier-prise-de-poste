@@ -39,7 +39,7 @@ Les durées et le seuil de salaire se règlent dans « Ajuster les durées et le
 | Situation du candidat | Publication de 3 semaines |
 |---|---|
 | Déjà titulaire d’un titre « salarié » ou « travailleur temporaire » (dont certificat de résidence algérien « salarié »), changement d’employeur | Non requise |
-| Autre titre professionnel (ex. certificat de résidence algérien « commerçant », entrepreneur) | À vérifier : consulter un avocat peut faire gagner 3 semaines |
+| Autre titre professionnel (ex. certificat de résidence algérien « commerçant », entrepreneur), avec une activité réelle justifiée sur l’année écoulée | Non requise |
 | Encore étudiant à l’embauche, dernière année comprise (carte « étudiant » ou certificat de résidence algérien « étudiant », autorisation provisoire de travail) | Non requise |
 | Demandeur d’asile depuis plus de 6 mois | Non requise |
 | Étudiant déjà diplômé : master obtenu dans l’année, poste en lien avec la formation, salaire ≥ 2 800,53 € brut/mois (1,5 × Smic) | Non requise |

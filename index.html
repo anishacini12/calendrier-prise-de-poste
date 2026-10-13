@@ -505,10 +505,10 @@ function decide(){
     why:'Le candidat est encore étudiant à la date d’embauche, par exemple en dernière année : l’employeur demande une autorisation provisoire de travail, sans opposabilité de la situation de l’emploi. Le changement de statut se fait ensuite, à la fin des études.',
     basis:ANEF+' Type de recrutement : « Étudiant en cours d’étude (autorisation provisoire de travail) ».',
     note:'Avec un certificat de résidence algérien « étudiant », le travail pendant les études est limité à 50 % de la durée annuelle de travail (Service-public.fr, fiche F2215).'};
-  if(S.titre==='pro') return {req:true,st:'check',badge:'À vérifier',title:'Publication conservée par prudence',
-    why:'Le candidat détient un titre de séjour délivré pour motif professionnel, par exemple un certificat de résidence algérien « commerçant ». Selon l’ANEF, recruter un étranger qui détient un tel titre ne nécessite pas d’opposabilité de la situation de l’emploi « dans la grande majorité des cas », mais ce titre n’apparaît pas dans le tableau détaillé.',
+  if(S.titre==='pro') return {req:false,st:'ok',badge:'Non requise',title:'Publication non requise',
+    why:'Le candidat détient un titre de séjour délivré pour motif professionnel, par exemple un certificat de résidence algérien « commerçant ». Selon l’ANEF, l’autorisation de travail est alors demandée, dans la grande majorité des cas, sans opposabilité de la situation de l’emploi, donc sans publication préalable.',
     basis:ANEF,
-    note:'Consulter un avocat en droit des étrangers est conseillé : cela peut faire gagner 3 semaines en évitant la publication sur France Travail. Si l’exemption est confirmée, choisissez « Forcer : sans publication ».'};
+    note:'Condition : pouvoir justifier d’une activité réelle sous ce titre au cours de l’année écoulée (déclarations, chiffre d’affaires, factures).'};
   if(S.titre==='asile') return {req:false,st:'ok',badge:'Non requise',title:'Publication non requise',
     why:'La demande d’asile est en cours d’examen par l’OFPRA depuis au moins 6 mois : l’autorisation de travail est demandée sans publication préalable.',
     basis:ANEF,note:''};
